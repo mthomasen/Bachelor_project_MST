@@ -11,11 +11,15 @@ Scenarios:
 - **Classroom (N=1+M)**: teacher–student asymmetry sweeping `k_ts`, `k_st`, `k_ss`
 
 ## Core model
-For oscillator *i*:
-\[
-\dot{\theta}_i(t)=\omega_i+\sum_{j=1}^{N}K_{ij}\sin(\theta_j(t)-\theta_i(t)).
-\]
-Convention: `K[i,j]` is influence from **j → i** (row receives from column).
+
+For oscillator $i$:
+
+$$
+\dot{\theta}_i(t)=\omega_i+\sum_{j=1}^{N}K_{ij}\sin\!\big(\theta_j(t)-\theta_i(t)\big).
+$$
+
+Convention: $K_{ij}$ is influence from oscillator $j$ to oscillator $i$
+(row $i$ receives from column $j$).
 
 ## Outputs
 Sweep runs write timestamped folders with:
