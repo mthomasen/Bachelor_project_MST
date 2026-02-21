@@ -33,5 +33,5 @@ Sweep runs write timestamped folders with:
 1. Run Python scripts to generate sweep outputs in `final_outputs/`
 2. Run R scripts in `analysis/` to make heatmaps and summary tables from `*_sweep_conditions.csv`
    
-## Contact
-Manuela Skov Thomasen — 202107872@post.au.dk
+## Conact
+Manuela Skov Thomasen: 202107872@post.au.dk
