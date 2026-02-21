@@ -1,0 +1,98 @@
+# ---
+title: "classroom_analysis"
+output: html_document
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+source(file.path("analysis", "dataload.R"))
+source(file.path("analysis", "analysis_helpers.R"))
+
+```
+
+```{r}
+cr <- load_classroom_conditions(outputs_dir = "final_outputs")
+classroom_df <- cr$conditions
+classroom_sweep_dir <- cr$sweep_dir
+
+print_basic_checks(classroom_df, keys = c("k_ts", "k_st", "k_ss"))
+
+classroom_df %>% summarise(across(c(r_mean, ts_plv_mean, ss_plv_mean, teacher_dom_mean), ~sum(is.na(.x))))
+
+
+```
+
+```{r}
+# --- classroom printed summaries (per k_ss) ---
+classroom_summaries <- classroom_df %>%
+  group_by(k_ss) %>%
+  summarise(
+    max_teacher_dom = teacher_dom_mean[which.max(teacher_dom_mean)][1],
+    max_teacher_dom_kts = k_ts[which.max(teacher_dom_mean)][1],
+    max_teacher_dom_kst = k_st[which.max(teacher_dom_mean)][1],
+
+    max_ts_plv = ts_plv_mean[which.max(ts_plv_mean)][1],
+    max_ts_plv_kts = k_ts[which.max(ts_plv_mean)][1],
+    max_ts_plv_kst = k_st[which.max(ts_plv_mean)][1],
+
+    .groups = "drop"
+  )
+
+classroom_summaries
+
+```
+
+```{r}
+classroom_df %>%
+  arrange(desc(teacher_dom_mean)) %>%
+  slice_head(n = 10) %>%
+  select(k_ts, k_st, k_ss, teacher_dom_mean, ts_plv_mean, ss_plv_mean, r_mean) %>%
+  kable(digits = 3, caption = "Top 10 classroom conditions by teacher dominance (tail-mean)")
+```
+
+```{r}
+# Heatmaps per k_ss
+p_tsplv <- ggplot(classroom_df, aes(x = k_ts, y = k_st, fill = ts_plv_mean)) +
+  geom_tile() +
+  facet_wrap(~k_ss) +
+  scale_fill_viridis_c(option = "C", na.value = "grey90") +
+  labs(
+    title = "Classroom: teacher–student PLV (mean over last fraction)",
+    x = "k_ts (teacher→student)", y = "k_st (student→teacher)", fill = "ts_plv_mean"
+  ) +
+  theme_thesis()
+
+p_dom <- ggplot(classroom_df, aes(x = k_ts, y = k_st, fill = teacher_dom_mean)) +
+  geom_tile() +
+  facet_wrap(~k_ss) +
+  scale_fill_viridis_c(option = "C", na.value = "grey90") +
+  labs(
+    title = "Classroom: teacher dominance (ts PLV − ss PLV)",
+    x = "k_ts (teacher→student)", y = "k_st (student→teacher)", fill = "teacher_dom_mean"
+  ) +
+  theme_thesis()
+
+p_r <- ggplot(classroom_df, aes(x = k_ts, y = k_st, fill = r_mean)) +
+  geom_tile() +
+  facet_wrap(~k_ss) +
+  scale_fill_viridis_c(option = "C", na.value = "grey90") +
+  labs(
+    title = "Classroom: global coherence R (mean over last fraction)",
+    x = "k_ts (teacher→student)", y = "k_st (student→teacher)", fill = "r_mean"
+  ) +
+  theme_thesis()
+
+p_tsplv
+p_dom
+p_r
+```
+
+```{r}
+
+save_fig(p_tsplv, "classroom_faceted_ts_plv_mean.png", classroom_sweep_dir, width = 9, height = 5)
+save_fig(p_dom,   "classroom_faceted_teacher_dom_mean.png", classroom_sweep_dir, width = 9, height = 5)
+save_fig(p_r,     "classroom_faceted_r_mean.png", classroom_sweep_dir, width = 9, height = 5)
+
+```
+

@@ -1,0 +1,107 @@
+---
+title: "triad_analysis"
+output: html_document
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+source(file.path("analysis", "dataload.R"))
+source(file.path("analysis", "analysis_helpers.R"))
+
+```
+
+```{r}
+tri <- load_triad_conditions(outputs_dir = "final_outputs")
+triad_df <- tri$conditions
+triad_sweep_dir <- tri$sweep_dir
+
+print_basic_checks(triad_df, keys = c("preset", "delta_omega_tri", "k_strong", "k_weak"))
+
+triad_df %>% summarise(across(c(r_mean, plv_pairmean_mean, coalition_mean, leader_dom_mean), ~sum(is.na(.x))))
+
+```
+
+```{r}
+# --- triad printed summaries (per preset) ---
+triad_summaries <- triad_df %>%
+  group_by(preset) %>%
+  summarise(
+    max_coalition = coalition_mean[which.max(coalition_mean)][1],
+    max_coalition_dw = delta_omega_tri[which.max(coalition_mean)][1],
+    max_coalition_kweak = k_weak[which.max(coalition_mean)][1],
+
+    max_leader_dom = leader_dom_mean[which.max(leader_dom_mean)][1],
+    max_leader_dw = delta_omega_tri[which.max(leader_dom_mean)][1],
+    max_leader_kweak = k_weak[which.max(leader_dom_mean)][1],
+
+    max_pairplv = plv_pairmean_mean[which.max(plv_pairmean_mean)][1],
+    max_pairplv_dw = delta_omega_tri[which.max(plv_pairmean_mean)][1],
+    max_pairplv_kweak = k_weak[which.max(plv_pairmean_mean)][1],
+
+    min_coalition = coalition_mean[which.min(coalition_mean)][1],
+    .groups = "drop"
+  )
+
+triad_summaries
+
+```
+
+```{r}
+triad_df %>%
+  group_by(preset) %>%
+  summarise(
+    best_coalition = max(coalition_mean, na.rm = TRUE),
+    best_leader_dom = max(leader_dom_mean, na.rm = TRUE),
+    best_pairplv = max(plv_pairmean_mean, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  kable(digits = 3, caption = "Triad: per-preset maxima (tail-mean summaries)")
+```
+
+```{r}
+# heatmaps faceted by preset (nice for paper)
+p_coal <- ggplot(triad_df, aes(x = delta_omega_tri, y = k_weak, fill = coalition_mean)) +
+  geom_tile() +
+  facet_wrap(~preset) +
+  scale_fill_viridis_c(option = "C", na.value = "grey90") +
+  labs(
+    title = "Triad regime maps: coalition index",
+    x = "Δω (fixed mismatch)", y = "k_weak", fill = "coalition_mean"
+  ) +
+  theme_thesis()
+
+p_pairplv <- ggplot(triad_df, aes(x = delta_omega_tri, y = k_weak, fill = plv_pairmean_mean)) +
+  geom_tile() +
+  facet_wrap(~preset) +
+  scale_fill_viridis_c(option = "C", na.value = "grey90") +
+  labs(
+    title = "Triad regime maps: mean pairwise PLV",
+    x = "Δω (fixed mismatch)", y = "k_weak", fill = "plv_pairmean_mean"
+  ) +
+  theme_thesis()
+
+p_lead <- ggplot(triad_df, aes(x = delta_omega_tri, y = k_weak, fill = leader_dom_mean)) +
+  geom_tile() +
+  facet_wrap(~preset) +
+  scale_fill_viridis_c(option = "C", na.value = "grey90") +
+  labs(
+    title = "Triad regime maps: leader dominance",
+    x = "Δω (fixed mismatch)", y = "k_weak", fill = "leader_dom_mean"
+  ) +
+  theme_thesis()
+
+p_coal
+p_pairplv
+p_lead
+
+
+```
+
+```{r}
+
+save_fig(p_coal,    "triad_faceted_coalition_mean.png", triad_sweep_dir, width = 9, height = 5)
+save_fig(p_pairplv, "triad_faceted_plv_pairmean_mean.png", triad_sweep_dir, width = 9, height = 5)
+save_fig(p_lead,    "triad_faceted_leader_dom_mean.png", triad_sweep_dir, width = 9, height = 5)
+```
+

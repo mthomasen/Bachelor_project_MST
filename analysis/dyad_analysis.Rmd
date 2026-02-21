@@ -1,0 +1,97 @@
+---
+title: "dyad_analysis"
+output: html_document
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+source(file.path("analysis", "dataload.R"))
+source(file.path("analysis", "analysis_helpers.R"))
+
+```
+
+```{r}
+dy <- load_dyad_conditions(outputs_dir = "final_outputs")
+dyad_df <- dy$conditions
+dyad_sweep_dir <- dy$sweep_dir
+
+print_basic_checks(dyad_df, keys = c("k", "delta_omega"))
+
+dyad_df %>% summarise(across(c(r_mean, plv_mean, anti_mean), ~sum(is.na(.x))))
+
+```
+
+```{r}
+# --- dyad printed summaries ---
+dyad_best_antiphase <- dyad_df %>%
+  arrange(desc(anti_mean), desc(plv_mean)) %>%
+  slice(1)
+
+dyad_best_plv <- dyad_df %>%
+  arrange(desc(plv_mean), desc(r_mean)) %>%
+  slice(1)
+
+dyad_worst_plv <- dyad_df %>%
+  arrange(plv_mean, r_mean) %>%
+  slice(1)
+
+dyad_top5_antiphase <- dyad_df %>%
+  arrange(desc(anti_mean)) %>%
+  slice_head(n = 5) %>%
+  select(k, delta_omega, anti_mean, plv_mean, r_mean)
+
+list(
+  best_antiphase = dyad_best_antiphase,
+  best_plv = dyad_best_plv,
+  worst_plv = dyad_worst_plv,
+  top5_antiphase = dyad_top5_antiphase
+)
+
+```
+
+```{r}
+dyad_df %>%
+  arrange(desc(anti_mean), desc(plv_mean)) %>%
+  slice_head(n = 10) %>%
+  select(k, delta_omega, anti_mean, plv_mean, r_mean) %>%
+  kable(digits = 3, caption = "Top 10 dyad conditions by anti-phase score (tail-mean)")
+```
+
+
+```{r}
+p_anti <- heatmap_tile(
+  dyad_df,
+  x = k, y = delta_omega, fill = anti_mean,
+  title = "Dyad regime map: anti-phase score (mean over last fraction)",
+  xlab = "coupling k", ylab = "frequency mismatch Δω"
+)
+
+p_plv <- heatmap_tile(
+  dyad_df,
+  x = k, y = delta_omega, fill = plv_mean,
+  title = "Dyad regime map: PLV (mean over last fraction)",
+  xlab = "coupling k", ylab = "frequency mismatch Δω"
+)
+
+p_r <- heatmap_tile(
+  dyad_df,
+  x = k, y = delta_omega, fill = r_mean,
+  title = "Dyad regime map: global coherence R (mean over last fraction)",
+  xlab = "coupling k", ylab = "frequency mismatch Δω"
+)
+
+p_anti
+p_plv
+p_r
+
+
+```
+
+```{r}
+
+save_fig(p_anti, "dyad_heatmap_antiphase.png", dyad_sweep_dir)
+save_fig(p_plv,  "dyad_heatmap_plv.png",      dyad_sweep_dir)
+save_fig(p_r,    "dyad_heatmap_r.png",        dyad_sweep_dir)
+```
+

@@ -1,0 +1,21 @@
+{
+  "dt": 0.01,
+  "t_max": 120.0,
+  "method": "rk4",
+  "normalize_by_n": true,
+  "noise_sd": 0.0,
+
+  "mean_omega": 1.5,
+  "sd_omega": 0.15,
+
+  "n_students": 10,
+
+  "k_ts_values": [-1.2, -1.0, -0.8, -0.6],
+  "k_st_values": [-0.4, -0.2, 0.0],
+  "k_ss_values": [-0.2, 0.0],
+
+  "plv_window_seconds": 2.0,
+  "summary_last_frac": 0.3,
+
+  "seeds": [1, 2, 3, 4, 5]
+}
